@@ -2,9 +2,9 @@ import random
 import pgzrun
 
 # Настройки игры
-TITLE = "ОБВАЛ"
-WIDTH = 800
-HEIGHT = 600
+TITLE = "BallBoom"
+WIDTH = 800  #Высота игрового поля
+HEIGHT = 600 #Ширина игрового поля
 SQUARE_SIZE = 50
 CIRCLE_RADIUS = 30
 LEVEL_UP_SCORE = 5  # Очки для повышения уровня сложности
