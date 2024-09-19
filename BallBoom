@@ -1,0 +1,113 @@
+import random
+import pgzrun
+
+# Настройки игры
+TITLE = "ОБВАЛ"
+WIDTH = 800
+HEIGHT = 600
+SQUARE_SIZE = 50
+CIRCLE_RADIUS = 30
+LEVEL_UP_SCORE = 5  # Очки для повышения уровня сложности
+
+# Игровые переменные
+square_x = WIDTH // 2
+square_y = HEIGHT - SQUARE_SIZE - 10
+circle_list = []
+score = 0
+level = 1
+circle_speed = 5
+game_over = False
+
+def draw():
+    screen.clear()
+    
+    if game_over:
+        # Отображение экрана завершения игры
+        screen.draw.text(f"Игра окончена!", center=(WIDTH // 2, HEIGHT // 2 - 30), fontsize=60, color=(255, 0, 0))
+        screen.draw.text(f"Ваш результат: {score}", center=(WIDTH // 2, HEIGHT // 2 + 10), fontsize=40, color=(255, 255, 255))
+        screen.draw.text("Нажмите 'ПРОБЕЛ' для перезапуска игры", center=(WIDTH // 2, HEIGHT // 2 + 60), fontsize=30, color=(255, 255, 255))
+    else:
+        screen.fill((255, 255, 255))  # Черный фон
+
+        # Нарисовать квадрат игрока
+        screen.draw.filled_rect(Rect((square_x, square_y), (SQUARE_SIZE, SQUARE_SIZE)), (0, 255, 0))
+
+        # Нарисовать круги
+        for circle in circle_list:
+            x, y = circle['pos']
+            screen.draw.filled_circle((x, y), CIRCLE_RADIUS, (255, 0, 0))
+
+        # Нарисовать счет
+        screen.draw.text(f"ОЧКИ: {score}", topleft=(10, 10), fontsize=30, color=(0, 0, 0))
+        screen.draw.text(f"УРОВЕНЬ: {level}", topleft=(10, 50), fontsize=30, color=(0, 0, 255))
+
+def update():
+    global square_x, square_y, score, level, circle_speed, LEVEL_UP_SCORE, game_over
+
+    if game_over:
+        # Если игра закончена, проверяем нажатие SPACE для перезапуска
+        if keyboard.space:
+            restart_game()
+        return
+
+    # Обработка движения игрока
+    if keyboard.left and square_x > 0:
+        square_x -= 10
+    if keyboard.right and square_x < WIDTH - SQUARE_SIZE:
+        square_x += 10
+
+    # Обновление положения кругов
+    for circle in circle_list:
+        x, y = circle['pos']
+        y += circle_speed
+        if y > HEIGHT:
+            circle_list.remove(circle)
+            score += 1
+        else:
+            circle['pos'] = (x, y)
+
+    # Увеличение уровня сложности
+    if score >= LEVEL_UP_SCORE * level:
+        level += 1
+        circle_speed += 2  # Увеличиваем скорость кругов
+        LEVEL_UP_SCORE += 5  # Увеличиваем количество очков для следующего уровня
+
+    # Проверка на столкновение
+    for circle in circle_list:
+        x, y = circle['pos']
+        if (abs(x - (square_x + SQUARE_SIZE // 2)) < CIRCLE_RADIUS + SQUARE_SIZE // 2 and
+            abs(y - (square_y + SQUARE_SIZE // 2)) < CIRCLE_RADIUS + SQUARE_SIZE // 2):
+            # Конец игры
+            game_over = True
+            clock.unschedule(update_timer)  # Останавливаем добавление кругов
+            break
+
+def add_circle():
+    """Функция для добавления новых кругов в игру"""
+    if random.random() < 0.1:  # Вероятность появления нового круга
+        new_circle = {
+            'pos': (random.randint(CIRCLE_RADIUS, WIDTH - CIRCLE_RADIUS), 0)
+        }
+        circle_list.append(new_circle)
+
+def update_timer():
+    """Функция для регулярного добавления кругов"""
+    add_circle()
+
+def restart_game():
+    """Функция для перезапуска игры"""
+    global square_x, square_y, circle_list, score, level, circle_speed, game_over, LEVEL_UP_SCORE
+    square_x = WIDTH // 2
+    square_y = HEIGHT - SQUARE_SIZE - 10
+    circle_list = []
+    score = 0
+    level = 1
+    circle_speed = 5
+    LEVEL_UP_SCORE = 5
+    game_over = False
+    clock.schedule_interval(update_timer, 1.0 / 30)  # Снова запускаем таймер для добавления кругов
+
+# Запускаем таймер для добавления кругов
+clock.schedule_interval(update_timer, 1.0 / 30)  # Обновляем круги 30 раз в секунду
+
+pgzrun.go()
